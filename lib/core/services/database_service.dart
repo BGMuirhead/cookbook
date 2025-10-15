@@ -64,7 +64,7 @@ class DatabaseService {
       CREATE TABLE steps (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         recipe_id INTEGER NOT NULL,
-        order INTEGER NOT NULL,
+        step_order INTEGER NOT NULL,
         description TEXT NOT NULL,
         FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
       )
@@ -141,7 +141,7 @@ class DatabaseService {
         'steps',
         where: 'recipe_id = ?',
         whereArgs: [map['id']],
-        orderBy: 'order ASC',
+        orderBy: 'step_order ASC',
       );
       recipes.add(Recipe.fromMap(
         map,
@@ -173,7 +173,7 @@ class DatabaseService {
         'steps',
         where: 'recipe_id = ?',
         whereArgs: [map['id']],
-        orderBy: 'order ASC',
+        orderBy: 'step_order ASC',
       );
       recipes.add(Recipe.fromMap(
         map,

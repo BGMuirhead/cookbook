@@ -1,13 +1,13 @@
 class RecipeStep {
   final int? id;
   final int recipeId;
-  final int order;
+  final int stepOrder;
   final String description;
 
   RecipeStep({
     this.id,
     required this.recipeId,
-    required this.order,
+    required this.stepOrder,
     required this.description,
   });
 
@@ -15,7 +15,7 @@ class RecipeStep {
     return RecipeStep(
       id: map['id'],
       recipeId: map['recipe_id'],
-      order: map['order'],
+      stepOrder: map['step_order'],
       description: map['description'],
     );
   }
@@ -23,12 +23,12 @@ class RecipeStep {
   Map<String, dynamic> toMap() => {
         'id': id,
         'recipe_id': recipeId,
-        'order': order,
+        'step_order': stepOrder,
         'description': description,
       };
 
   Map<String, dynamic> toJson() => {
-        'order': order,
+        'step_order': stepOrder,
         'description': description,
       };
 }
