@@ -1,5 +1,4 @@
 import 'package:cookbook_app/core/services/database_service.dart';
-import 'package:cookbook_app/features/ingredients/data/models/global_ingredient.dart';
 import 'package:cookbook_app/features/recipes/data/models/recipe.dart';
 
 abstract class RecipeRepository {
