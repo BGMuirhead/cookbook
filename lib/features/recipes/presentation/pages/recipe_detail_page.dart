@@ -16,6 +16,12 @@ class RecipeDetailPage extends ConsumerStatefulWidget {
 class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
   double _scaleMultiplier = 1.0;
 
+  String _formatAmount(double amount) {
+    String fixed = amount.toStringAsFixed(2);
+    fixed = fixed.replaceAll(RegExp(r'0*$'), '').replaceAll(RegExp(r'\.$'), '');
+    return fixed;
+  }
+
   @override
   Widget build(BuildContext context) {
     final recipes = ref.watch(recipeListProvider);
@@ -30,27 +36,31 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Servings: ${scaledRecipe.servings} ${scaledRecipe.servingName ?? ''}',
+              'Multiplier: x${_formatAmount(_scaleMultiplier)}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(
+              'Servings: ${_formatAmount(scaledRecipe.servings.toDouble())} ${scaledRecipe.servingName ?? ''}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
             Text('Scale Recipe', style: Theme.of(context).textTheme.titleMedium),
             Slider(
               value: _scaleMultiplier,
-              min: 0.5,
+              min: 0.25,
               max: 3.0,
-              divisions: 25,
-              label: _scaleMultiplier.toStringAsFixed(1),
+              divisions: 11, // For 0.25 increments
+              label: _formatAmount(_scaleMultiplier),
               onChanged: (value) {
                 setState(() {
-                  _scaleMultiplier = value;
+                  _scaleMultiplier = double.parse(value.toStringAsFixed(2));
                 });
               },
             ),
             const SizedBox(height: 16),
             Text('Ingredients', style: Theme.of(context).textTheme.titleMedium),
             for (var ingredient in scaledRecipe.recipeIngredients)
-              Text('• ${ingredient.amount} ${ingredient.unit} ${ref.watch(ingredientListProvider).firstWhere((i) => i.id == ingredient.ingredientId).name}'),
+              Text('• ${_formatAmount(ingredient.amount)} ${ingredient.unit} ${ref.watch(ingredientListProvider).firstWhere((i) => i.id == ingredient.ingredientId).name}'),
             const SizedBox(height: 16),
             Text('Steps', style: Theme.of(context).textTheme.titleMedium),
             for (var step in scaledRecipe.steps) Text('${step.stepOrder}. ${step.description}'),

@@ -12,16 +12,16 @@ class IngredientSelector extends ConsumerStatefulWidget {
 }
 
 class _IngredientSelectorState extends ConsumerState<IngredientSelector> {
-  final _nameController = TextEditingController();
   final _amountController = TextEditingController();
   final _unitController = TextEditingController();
+  final _newIngredientController = TextEditingController();
   String? _selectedIngredient;
 
   @override
   void dispose() {
-    _nameController.dispose();
     _amountController.dispose();
     _unitController.dispose();
+    _newIngredientController.dispose();
     super.dispose();
   }
 
@@ -32,7 +32,7 @@ class _IngredientSelectorState extends ConsumerState<IngredientSelector> {
     return Column(
       children: [
         DropdownButton<String>(
-          hint: const Text('Select or type ingredient'),
+          hint: const Text('Select ingredient'),
           value: _selectedIngredient,
           isExpanded: true,
           items: ingredients
@@ -44,19 +44,17 @@ class _IngredientSelectorState extends ConsumerState<IngredientSelector> {
           onChanged: (value) {
             setState(() {
               _selectedIngredient = value;
-              _nameController.text = value ?? '';
             });
           },
         ),
-        TextFormField(
-          controller: _nameController,
-          decoration: const InputDecoration(labelText: 'Ingredient Name'),
-          onChanged: (value) {
-            setState(() {
-              _selectedIngredient = null;
-            });
-          },
-        ),
+        if (_selectedIngredient == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: TextField(
+              controller: _newIngredientController,
+              decoration: const InputDecoration(labelText: 'New Ingredient Name'),
+            ),
+          ),
         TextFormField(
           controller: _amountController,
           decoration: const InputDecoration(labelText: 'Amount'),
@@ -69,19 +67,24 @@ class _IngredientSelectorState extends ConsumerState<IngredientSelector> {
         const SizedBox(height: 8),
         ElevatedButton(
           onPressed: () {
-            if (_nameController.text.isNotEmpty && _amountController.text.isNotEmpty && _unitController.text.isNotEmpty) {
+            final name = _selectedIngredient ?? _newIngredientController.text;
+            if (name.isNotEmpty && _amountController.text.isNotEmpty && _unitController.text.isNotEmpty) {
               final amount = double.tryParse(_amountController.text);
               if (amount != null) {
                 widget.onIngredientAdded({
-                  'name': _nameController.text,
+                  'name': name,
                   'amount': amount,
                   'unit': _unitController.text,
                 });
-                ref.read(ingredientListProvider.notifier).addIngredient(_nameController.text);
-                _nameController.clear();
+                if (_selectedIngredient == null) {
+                  ref.read(ingredientListProvider.notifier).addIngredient(name);
+                }
                 _amountController.clear();
                 _unitController.clear();
-                _selectedIngredient = null;
+                _newIngredientController.clear();
+                setState(() {
+                  _selectedIngredient = null;
+                });
               }
             }
           },

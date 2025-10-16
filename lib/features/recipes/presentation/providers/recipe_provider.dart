@@ -6,13 +6,14 @@ import 'package:cookbook_app/features/recipes/domain/usecases/add_recipe_with_in
 
 final recipeListProvider = StateNotifierProvider<RecipeListNotifier, List<Recipe>>((ref) {
   final repository = ref.watch(recipeRepositoryProvider);
-  return RecipeListNotifier(repository);
+  return RecipeListNotifier(repository, ref);
 });
 
 class RecipeListNotifier extends StateNotifier<List<Recipe>> {
   final RecipeRepository repository;
+  final Ref ref;
 
-  RecipeListNotifier(this.repository) : super([]) {
+  RecipeListNotifier(this.repository, this.ref) : super([]) {
     fetchRecipes();
   }
 
@@ -36,30 +37,33 @@ class RecipeListNotifier extends StateNotifier<List<Recipe>> {
       steps: steps,
     );
     await fetchRecipes(); // Refresh the list
+    ref.invalidate(searchRecipesProvider); // Invalidate search to refresh
   }
 
   Future<void> deleteRecipe(int id) async {
     await repository.deleteRecipe(id);
     await fetchRecipes(); // Refresh the list
+    ref.invalidate(searchRecipesProvider); // Invalidate search to refresh
   }
 }
 
 final searchRecipesProvider = StateNotifierProvider.family<SearchRecipesNotifier, List<Recipe>, String?>((ref, query) {
   final repository = ref.watch(recipeRepositoryProvider);
-  return SearchRecipesNotifier(repository, query);
+  return SearchRecipesNotifier(repository, query, ref);
 });
 
 class SearchRecipesNotifier extends StateNotifier<List<Recipe>> {
   final RecipeRepository repository;
   final String? query;
+  final Ref ref;
 
-  SearchRecipesNotifier(this.repository, this.query) : super([]) {
+  SearchRecipesNotifier(this.repository, this.query, this.ref) : super([]) {
     search();
   }
 
   Future<void> search() async {
     if (query == null || query!.isEmpty) {
-      state = await repository.getAllRecipes();
+      state = ref.read(recipeListProvider);
     } else {
       state = await repository.searchRecipes(query!);
     }

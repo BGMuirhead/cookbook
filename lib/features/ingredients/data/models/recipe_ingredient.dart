@@ -18,6 +18,9 @@ class RecipeIngredient {
     double newAmount = amount * multiplier;
     if (unit == 'each') {
       newAmount = newAmount.roundToDouble();
+    } else {
+      // Round to 2 decimal places for other units
+      newAmount = double.parse(newAmount.toStringAsFixed(2));
     }
     return RecipeIngredient(
       id: id,

@@ -32,14 +32,14 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search by recipe or ingredient...',
+                hintText: 'Search by recipe name...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
               onChanged: (value) {
-                ref.read(searchRecipesProvider(value).notifier).search();
+                setState(() {}); // Trigger rebuild for new query
               },
             ),
           ),

@@ -152,16 +152,14 @@ class DatabaseService {
     return recipes;
   }
 
-  // Search by recipe name or ingredient
+  // Search by recipe name only
   Future<List<Recipe>> searchRecipes(String query) async {
     final db = await database;
     final recipeMaps = await db.rawQuery('''
       SELECT DISTINCT r.*
       FROM recipes r
-      LEFT JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-      LEFT JOIN global_ingredients gi ON ri.ingredient_id = gi.id
-      WHERE r.name LIKE ? OR gi.name LIKE ?
-    ''', ['%$query%', '%$query%']);
+      WHERE r.name LIKE ?
+    ''', ['%$query%']);
     final List<Recipe> recipes = [];
     for (var map in recipeMaps) {
       final ingredients = await db.query(
