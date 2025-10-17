@@ -27,9 +27,10 @@ class _IngredientSelectionPageState extends ConsumerState<IngredientSelectionPag
   @override
   Widget build(BuildContext context) {
     final ingredients = ref.watch(ingredientListProvider);
-    final filteredIngredients = ingredients.where((ingredient) {
+    var filteredIngredients = ingredients.where((ingredient) {
       return ingredient.name.toLowerCase().contains(_searchController.text.toLowerCase());
     }).toList();
+    filteredIngredients.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Select Ingredient')),

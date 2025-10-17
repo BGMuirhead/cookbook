@@ -15,12 +15,34 @@ class RecipeDetailPage extends ConsumerStatefulWidget {
 }
 
 class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
+  late FixedExtentScrollController _scrollController;
   double _scaleMultiplier = 1.0;
 
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = FixedExtentScrollController(initialItem: 3); // Start at 1.0 (0.25 * 4)
+    _scrollController.addListener(() {
+      setState(() {
+        _scaleMultiplier = 0.25 + _scrollController.selectedItem * 0.25;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   String _formatAmount(double amount) {
-    String fixed = amount.toStringAsFixed(2);
-    fixed = fixed.replaceAll(RegExp(r'0*$'), '').replaceAll(RegExp(r'\.$'), '');
-    return fixed;
+    // Debug print to verify input
+    debugPrint('Formatting amount: $amount');
+    if (amount == amount.floor()) {
+      return amount.toStringAsFixed(0);
+    } else {
+      return amount.toStringAsFixed(2);
+    }
   }
 
   @override
@@ -28,6 +50,8 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
     final recipes = ref.watch(recipeListProvider);
     final recipe = recipes.firstWhere((r) => r.id == widget.recipeId);
     final scaledRecipe = ScaleRecipe()(recipe, _scaleMultiplier);
+    // Debug print to verify scaled servings
+    debugPrint('Scaled servings: ${scaledRecipe.servings.toDouble()}');
 
     return Scaffold(
       appBar: AppBar(title: Text(scaledRecipe.name)),
@@ -37,32 +61,38 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Multiplier: x${_formatAmount(_scaleMultiplier)}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            Text(
-              'Servings: ${_formatAmount(scaledRecipe.servings.toDouble())} ${scaledRecipe.servingName ?? ''}',
+              'Servings: ${_formatAmount(scaledRecipe.servings.toDouble())}''}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
             Text('Scale Recipe', style: Theme.of(context).textTheme.titleMedium),
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                showValueIndicator: ShowValueIndicator.always,
-                tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 4.0),
-                valueIndicatorTextStyle: Theme.of(context).textTheme.bodyMedium,
-              ),
-              child: Slider(
-                value: _scaleMultiplier,
-                min: 0.25,
-                max: 3.0,
-                divisions: 11, // For 0.25 increments (0.25, 0.5, ..., 3.0)
-                label: _formatAmount(_scaleMultiplier),
-                onChanged: (value) {
-                  setState(() {
-                    _scaleMultiplier = double.parse(value.toStringAsFixed(2));
-                  });
-                },
+            SizedBox(
+              height: 100,
+              child: RotatedBox(
+                quarterTurns: 3, // Rotate to horizontal
+                child: ListWheelScrollView(
+                  controller: _scrollController,
+                  itemExtent: 80, // Width of each item
+                  diameterRatio: 2.0, // Curve effect
+                  useMagnifier: true,
+                  magnification: 1.2,
+                  physics: const FixedExtentScrollPhysics(),
+                  children: List.generate(
+                    12, // 0.25 to 3.0
+                    (index) => RotatedBox(
+                      quarterTurns: 1, // Rotate back for text
+                      child: Center(
+                        child: Text(
+                          'x${_formatAmount(0.25 + index * 0.25)}',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: (0.25 + index * 0.25) == _scaleMultiplier ? Colors.blue : Colors.black,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),

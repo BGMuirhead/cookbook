@@ -31,13 +31,97 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
     super.dispose();
   }
 
+  void _addIngredient(Map<String, dynamic> ingredient) {
+    setState(() {
+      _ingredients.add(ingredient);
+      _ingredients.sort((a, b) => a['name'].compareTo(b['name']));
+    });
+  }
+
   void _addStep() {
-    if (_stepController.text.isNotEmpty) {
+    final stepText = _stepController.text.trim();
+    if (stepText.isNotEmpty) {
       setState(() {
-        _steps.add(_stepController.text);
+        _steps.add(stepText);
         _stepController.clear();
       });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Step cannot be empty or just spaces')),
+      );
     }
+  }
+
+  void _editStep(int index) {
+    final editController = TextEditingController(text: _steps[index]);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Step'),
+        content: TextField(
+          controller: editController,
+          decoration: const InputDecoration(labelText: 'Step Description'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final editedText = editController.text.trim();
+              if (editedText.isNotEmpty) {
+                setState(() {
+                  _steps[index] = editedText;
+                });
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Step cannot be empty or just spaces')),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _showPreviewDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Recipe Preview'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Name: ${_nameController.text}', style: Theme.of(context).textTheme.titleMedium),
+                  Text('Servings: ${_servingsController.text} ${_servingNameController.text.isEmpty ? '' : _servingNameController.text}'),
+                  const SizedBox(height: 8),
+                  const Text('Ingredients:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  for (var ingredient in _ingredients)
+                    Text('• ${ingredient['amount']} ${ingredient['unit']} ${ingredient['name']}'),
+                  const SizedBox(height: 8),
+                  const Text('Steps:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  for (var i = 0; i < _steps.length; i++) Text('${i + 1}. ${_steps[i]}'),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   Future<void> _saveRecipe() async {
@@ -48,6 +132,8 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
         );
         return;
       }
+      final confirmed = await _showPreviewDialog();
+      if (!confirmed) return;
       setState(() {
         _isLoading = true;
       });
@@ -98,7 +184,13 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
                       controller: _servingsController,
                       decoration: const InputDecoration(labelText: 'Servings'),
                       keyboardType: TextInputType.number,
-                      validator: (value) => value!.isEmpty || int.tryParse(value) == null ? 'Enter a valid number' : null,
+                      validator: (value) {
+                        if (value!.isEmpty) return 'Enter a valid number';
+                        final parsed = double.tryParse(value);
+                        if (parsed == null) return 'Enter a valid number';
+                        if (parsed != parsed.floor()) return 'Enter a whole number';
+                        return null;
+                      },
                     ),
                     TextFormField(
                       controller: _servingNameController,
@@ -106,20 +198,6 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
                     ),
                     const SizedBox(height: 16),
                     const Text('Ingredients', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const IngredientSelectionPage()),
-                        );
-                        if (result != null) {
-                          setState(() {
-                            _ingredients.add(result);
-                          });
-                        }
-                      },
-                      child: const Text('Add Ingredient'),
-                    ),
                     for (var ingredient in _ingredients)
                       ListTile(
                         title: Text('${ingredient['amount']} ${ingredient['unit']} ${ingredient['name']}'),
@@ -132,18 +210,39 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
                           },
                         ),
                       ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const IngredientSelectionPage()),
+                        );
+                        if (result != null) {
+                          _addIngredient(result);
+                        }
+                      },
+                      child: const Text('Add Ingredient'),
+                    ),
                     const SizedBox(height: 16),
                     const Text('Steps', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     for (var i = 0; i < _steps.length; i++)
                       ListTile(
                         title: Text('${i + 1}. ${_steps[i]}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
-                            setState(() {
-                              _steps.removeAt(i);
-                            });
-                          },
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () => _editStep(i),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () {
+                                setState(() {
+                                  _steps.removeAt(i);
+                                });
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     TextFormField(

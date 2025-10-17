@@ -10,7 +10,8 @@ class RecipeListPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final recipes = ref.watch(recipeListProvider);
+    var recipes = ref.watch(recipeListProvider);
+    recipes = List.from(recipes)..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     return Scaffold(
       appBar: AppBar(
@@ -58,7 +59,6 @@ class RecipeListPage extends ConsumerWidget {
                   ),
                   confirmDismiss: (direction) async {
                     if (direction == DismissDirection.endToStart) {
-                      // Delete action
                       return await showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
@@ -77,11 +77,10 @@ class RecipeListPage extends ConsumerWidget {
                         ),
                       );
                     } else {
-                      // Edit action (placeholder for now)
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Edit functionality for ${recipe.name} coming soon!')),
                       );
-                      return false; // Don't dismiss for edit
+                      return false;
                     }
                   },
                   onDismissed: (direction) {
