@@ -4,7 +4,7 @@ import 'package:cookbook_app/features/recipes/data/models/recipe_step.dart';
 class Recipe {
   final int? id;
   final String name;
-  final int servings;
+  final int servings;  // Keep as int for original, but scale to double if needed in UI
   final String? servingName;
   final DateTime createdAt;
   final DateTime updatedAt;

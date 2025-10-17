@@ -44,32 +44,53 @@ class RecipeListPage extends ConsumerWidget {
                 final recipe = recipes[index];
                 return Dismissible(
                   key: Key(recipe.id.toString()),
-                  background: Container(color: Colors.red),
-                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.blue,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: const Icon(Icons.edit, color: Colors.white),
+                  ),
+                  secondaryBackground: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
                   confirmDismiss: (direction) async {
-                    return await showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Confirm Delete'),
-                        content: const Text('Are you sure you want to delete this recipe?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      ),
-                    );
+                    if (direction == DismissDirection.endToStart) {
+                      // Delete action
+                      return await showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Confirm Delete'),
+                          content: const Text('Are you sure you want to delete this recipe?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      // Edit action (placeholder for now)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Edit functionality for ${recipe.name} coming soon!')),
+                      );
+                      return false; // Don't dismiss for edit
+                    }
                   },
                   onDismissed: (direction) {
-                    ref.read(recipeListProvider.notifier).deleteRecipe(recipe.id!);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${recipe.name} deleted')),
-                    );
+                    if (direction == DismissDirection.endToStart) {
+                      ref.read(recipeListProvider.notifier).deleteRecipe(recipe.id!);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${recipe.name} deleted')),
+                      );
+                    }
                   },
                   child: ListTile(
                     title: Text(recipe.name),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cookbook_app/features/ingredients/presentation/providers/ingredient_provider.dart';
+import 'package:cookbook_app/features/recipes/data/models/recipe.dart';
 import 'package:cookbook_app/features/recipes/domain/usecases/scale_recipe.dart';
 import 'package:cookbook_app/features/recipes/presentation/providers/recipe_provider.dart';
 
@@ -45,17 +46,24 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
             ),
             const SizedBox(height: 16),
             Text('Scale Recipe', style: Theme.of(context).textTheme.titleMedium),
-            Slider(
-              value: _scaleMultiplier,
-              min: 0.25,
-              max: 3.0,
-              divisions: 11, // For 0.25 increments
-              label: _formatAmount(_scaleMultiplier),
-              onChanged: (value) {
-                setState(() {
-                  _scaleMultiplier = double.parse(value.toStringAsFixed(2));
-                });
-              },
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                showValueIndicator: ShowValueIndicator.always,
+                tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 4.0),
+                valueIndicatorTextStyle: Theme.of(context).textTheme.bodyMedium,
+              ),
+              child: Slider(
+                value: _scaleMultiplier,
+                min: 0.25,
+                max: 3.0,
+                divisions: 11, // For 0.25 increments (0.25, 0.5, ..., 3.0)
+                label: _formatAmount(_scaleMultiplier),
+                onChanged: (value) {
+                  setState(() {
+                    _scaleMultiplier = double.parse(value.toStringAsFixed(2));
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 16),
             Text('Ingredients', style: Theme.of(context).textTheme.titleMedium),

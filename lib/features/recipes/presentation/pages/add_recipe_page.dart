@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cookbook_app/core/providers.dart';
-import 'package:cookbook_app/features/ingredients/presentation/widgets/ingredient_selector.dart';
+import 'package:cookbook_app/features/ingredients/presentation/pages/ingredient_selection_page.dart';
 import 'package:cookbook_app/features/recipes/domain/usecases/add_recipe_with_ingredients.dart';
 import 'package:cookbook_app/features/recipes/presentation/providers/recipe_provider.dart';
 
@@ -29,12 +29,6 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
     _servingNameController.dispose();
     _stepController.dispose();
     super.dispose();
-  }
-
-  void _addIngredient(Map<String, dynamic> ingredient) {
-    setState(() {
-      _ingredients.add(ingredient);
-    });
   }
 
   void _addStep() {
@@ -112,7 +106,20 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
                     ),
                     const SizedBox(height: 16),
                     const Text('Ingredients', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    IngredientSelector(onIngredientAdded: _addIngredient),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const IngredientSelectionPage()),
+                        );
+                        if (result != null) {
+                          setState(() {
+                            _ingredients.add(result);
+                          });
+                        }
+                      },
+                      child: const Text('Add Ingredient'),
+                    ),
                     for (var ingredient in _ingredients)
                       ListTile(
                         title: Text('${ingredient['amount']} ${ingredient['unit']} ${ingredient['name']}'),
