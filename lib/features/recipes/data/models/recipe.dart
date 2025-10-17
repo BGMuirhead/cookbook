@@ -4,7 +4,7 @@ import 'package:cookbook_app/features/recipes/data/models/recipe_step.dart';
 class Recipe {
   final int? id;
   final String name;
-  final int servings;  // Keep as int for original, but scale to double if needed in UI
+  final double servings;  // Keep as int for original, but scale to double if needed in UI
   final String? servingName;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -27,7 +27,7 @@ class Recipe {
     return Recipe(
       id: id,
       name: name,
-      servings: (servings * multiplier).round(),
+      servings: servings * multiplier,
       servingName: servingName,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -41,7 +41,7 @@ class Recipe {
     return Recipe(
       id: map['id'],
       name: map['name'],
-      servings: map['servings'],
+      servings: (map['servings'] as num).toDouble(),
       servingName: map['serving_name'],
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),

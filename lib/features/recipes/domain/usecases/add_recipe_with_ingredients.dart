@@ -13,7 +13,7 @@ class AddRecipeWithIngredients {
 
   Future<int> call({
     required String name,
-    required int servings,
+    required double servings,
     String? servingName,
     required List<Map<String, dynamic>> ingredients,
     required List<String> steps,

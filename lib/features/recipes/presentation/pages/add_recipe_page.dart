@@ -144,7 +144,7 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
         );
         await ref.read(recipeListProvider.notifier).addRecipe(
               name: _nameController.text,
-              servings: int.parse(_servingsController.text),
+              servings: double.parse(_servingsController.text),
               servingName: _servingNameController.text.isEmpty ? null : _servingNameController.text,
               ingredients: _ingredients,
               steps: _steps,

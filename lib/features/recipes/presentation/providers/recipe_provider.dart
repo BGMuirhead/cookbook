@@ -23,7 +23,7 @@ class RecipeListNotifier extends StateNotifier<List<Recipe>> {
 
   Future<void> addRecipe({
     required String name,
-    required int servings,
+    required double servings,
     String? servingName,
     required List<Map<String, dynamic>> ingredients,
     required List<String> steps,

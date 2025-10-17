@@ -37,7 +37,7 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
 
   String _formatAmount(double amount) {
     // Debug print to verify input
-    debugPrint('Formatting amount: $amount');
+    //debugPrint('Formatting amount: $amount');
     if (amount == amount.floor()) {
       return amount.toStringAsFixed(0);
     } else {
@@ -51,7 +51,8 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
     final recipe = recipes.firstWhere((r) => r.id == widget.recipeId);
     final scaledRecipe = ScaleRecipe()(recipe, _scaleMultiplier);
     // Debug print to verify scaled servings
-    debugPrint('Scaled servings: ${scaledRecipe.servings.toDouble()}');
+    // debugPrint('Scaled servings: ${scaledRecipe.servings}');
+    // debugPrint('Scaled servings: ${_scaleMultiplier}');
 
     return Scaffold(
       appBar: AppBar(title: Text(scaledRecipe.name)),
@@ -61,7 +62,7 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Servings: ${_formatAmount(scaledRecipe.servings.toDouble())}''}',
+              'Servings: ${_formatAmount(scaledRecipe.servings.toDouble())}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),

@@ -41,7 +41,7 @@ class DatabaseService {
       CREATE TABLE recipes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        servings INTEGER NOT NULL,
+        servings REAL NOT NULL,
         serving_name TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
