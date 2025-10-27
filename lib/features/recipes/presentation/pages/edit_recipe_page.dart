@@ -2,25 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cookbook_app/core/providers.dart';
 import 'package:cookbook_app/features/ingredients/presentation/pages/ingredient_selection_page.dart';
-import 'package:cookbook_app/features/recipes/domain/usecases/add_recipe_with_ingredients.dart';
+import 'package:cookbook_app/features/recipes/data/models/recipe.dart';
+import 'package:cookbook_app/features/recipes/domain/usecases/update_recipe_with_ingredients.dart';
 import 'package:cookbook_app/features/recipes/presentation/providers/recipe_provider.dart';
 
-class AddRecipePage extends ConsumerStatefulWidget {
-  const AddRecipePage({super.key});
+class EditRecipePage extends ConsumerStatefulWidget {
+  final Recipe recipe;
+
+  const EditRecipePage({super.key, required this.recipe});
 
   @override
-  ConsumerState<AddRecipePage> createState() => _AddRecipePageState();
+  ConsumerState<EditRecipePage> createState() => _EditRecipePageState();
 }
 
-class _AddRecipePageState extends ConsumerState<AddRecipePage> {
+class _EditRecipePageState extends ConsumerState<EditRecipePage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _servingsController = TextEditingController();
   final _servingNameController = TextEditingController();
   final List<Map<String, dynamic>> _ingredients = [];
-  final List<String> _steps = [];
+  List<String> _steps = [];
   final _stepController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = widget.recipe.name;
+    _servingsController.text = widget.recipe.servings.toStringAsFixed(0);
+    _servingNameController.text = widget.recipe.servingName ?? '';
+    _steps = widget.recipe.steps.map((s) => s.description).toList();
+    Future.microtask(_loadIngredients);
+  }
+
+  Future<void> _loadIngredients() async {
+    final ingredientRepo = ref.read(ingredientRepositoryProvider);
+    final List<Map<String, dynamic>> loadedIngredients = [];
+    for (var ri in widget.recipe.recipeIngredients) {
+      final gi = await ingredientRepo.getGlobalIngredientById(ri.ingredientId);
+      if (gi != null) {
+        loadedIngredients.add({
+          'name': gi.name,
+          'amount': ri.amount,
+          'unit': gi.defaultUnit,
+          'ingredient_id': gi.id,
+        });
+      }
+    }
+    setState(() {
+      _ingredients.addAll(loadedIngredients);
+    });
+  }
 
   @override
   void dispose() {
@@ -178,14 +210,16 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
         });
         try {
           final servings = double.parse(_servingsController.text);
-          final addRecipeUseCase = AddRecipeWithIngredients(
+          final updateRecipeUseCase = UpdateRecipeWithIngredients(
             ref.read(recipeRepositoryProvider),
             ref.read(ingredientRepositoryProvider),
           );
-          await addRecipeUseCase(
+          await updateRecipeUseCase(
+            id: widget.recipe.id!,
             name: _nameController.text,
             servings: servings,
             servingName: _servingNameController.text.isEmpty ? null : _servingNameController.text,
+            createdAt: widget.recipe.createdAt,
             ingredients: _ingredients,
             steps: _steps,
           );
@@ -212,7 +246,7 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Recipe')),
+      appBar: AppBar(title: const Text('Edit Recipe')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -309,7 +343,7 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _isLoading ? null : _saveRecipe,
-                      child: const Text('Save Recipe'),
+                      child: const Text('Save Changes'),
                     ),
                   ],
                 ),

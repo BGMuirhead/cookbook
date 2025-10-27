@@ -6,6 +6,8 @@ abstract class RecipeRepository {
   Future<List<Recipe>> getAllRecipes();
   Future<List<Recipe>> searchRecipes(String query);
   Future<void> deleteRecipe(int id);
+  // NEW: Update recipe
+  Future<void> updateRecipe(Recipe recipe);
 }
 
 class RecipeRepositoryImpl implements RecipeRepository {
@@ -31,5 +33,11 @@ class RecipeRepositoryImpl implements RecipeRepository {
   @override
   Future<void> deleteRecipe(int id) async {
     await _databaseService.deleteRecipe(id);
+  }
+
+  // NEW: Implementation for update
+  @override
+  Future<void> updateRecipe(Recipe recipe) async {
+    await _databaseService.updateRecipe(recipe);
   }
 }

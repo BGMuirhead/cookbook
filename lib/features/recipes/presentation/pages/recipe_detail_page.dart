@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cookbook_app/features/ingredients/presentation/providers/ingredient_provider.dart';
-import 'package:cookbook_app/features/recipes/data/models/recipe.dart';
 import 'package:cookbook_app/features/recipes/domain/usecases/scale_recipe.dart';
 import 'package:cookbook_app/features/recipes/presentation/providers/recipe_provider.dart';
 
@@ -36,8 +35,6 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
   }
 
   String _formatAmount(double amount) {
-    // Debug print to verify input
-    //debugPrint('Formatting amount: $amount');
     if (amount == amount.floor()) {
       return amount.toStringAsFixed(0);
     } else {
@@ -50,9 +47,7 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
     final recipes = ref.watch(recipeListProvider);
     final recipe = recipes.firstWhere((r) => r.id == widget.recipeId);
     final scaledRecipe = ScaleRecipe()(recipe, _scaleMultiplier);
-    // Debug print to verify scaled servings
-    // debugPrint('Scaled servings: ${scaledRecipe.servings}');
-    // debugPrint('Scaled servings: ${_scaleMultiplier}');
+    final ingredientList = ref.watch(ingredientListProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(scaledRecipe.name)),
@@ -98,8 +93,9 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage> {
             ),
             const SizedBox(height: 16),
             Text('Ingredients', style: Theme.of(context).textTheme.titleMedium),
+            // NEW: Display ingredients in their stored order (no sorting)
             for (var ingredient in scaledRecipe.recipeIngredients)
-              Text('• ${_formatAmount(ingredient.amount)} ${ingredient.unit} ${ref.watch(ingredientListProvider).firstWhere((i) => i.id == ingredient.ingredientId).name}'),
+              Text('• ${_formatAmount(ingredient.amount)} ${ingredient.unit} ${ingredientList.firstWhere((i) => i.id == ingredient.ingredientId).name}'),
             const SizedBox(height: 16),
             Text('Steps', style: Theme.of(context).textTheme.titleMedium),
             for (var step in scaledRecipe.steps) Text('${step.stepOrder}. ${step.description}'),

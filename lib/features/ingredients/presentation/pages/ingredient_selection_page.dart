@@ -13,14 +13,12 @@ class IngredientSelectionPage extends ConsumerStatefulWidget {
 class _IngredientSelectionPageState extends ConsumerState<IngredientSelectionPage> {
   final _searchController = TextEditingController();
   final _amountController = TextEditingController();
-  final _unitController = TextEditingController();
   GlobalIngredient? _selectedIngredient;
 
   @override
   void dispose() {
     _searchController.dispose();
     _amountController.dispose();
-    _unitController.dispose();
     super.dispose();
   }
 
@@ -61,6 +59,7 @@ class _IngredientSelectionPageState extends ConsumerState<IngredientSelectionPag
                         final ingredient = filteredIngredients[index];
                         return ListTile(
                           title: Text(ingredient.name),
+                          subtitle: Text('Unit: ${ingredient.defaultUnit}'),
                           onTap: () {
                             setState(() {
                               _selectedIngredient = ingredient;
@@ -78,22 +77,25 @@ class _IngredientSelectionPageState extends ConsumerState<IngredientSelectionPag
               decoration: const InputDecoration(labelText: 'Amount'),
               keyboardType: TextInputType.number,
             ),
-            TextField(
-              controller: _unitController,
-              decoration: const InputDecoration(labelText: 'Unit (e.g., cups, tsp)'),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                _selectedIngredient != null
+                    ? 'Unit: ${_selectedIngredient!.defaultUnit}'
+                    : 'Select an ingredient to see unit',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                if (_selectedIngredient != null &&
-                    _amountController.text.isNotEmpty &&
-                    _unitController.text.isNotEmpty) {
+                if (_selectedIngredient != null && _amountController.text.isNotEmpty) {
                   final amount = double.tryParse(_amountController.text);
                   if (amount != null) {
                     Navigator.pop(context, {
                       'name': _selectedIngredient!.name,
                       'amount': amount,
-                      'unit': _unitController.text,
+                      'unit': _selectedIngredient!.defaultUnit,
                       'ingredient_id': _selectedIngredient!.id,
                     });
                   } else {
@@ -118,11 +120,21 @@ class _IngredientSelectionPageState extends ConsumerState<IngredientSelectionPag
             context: context,
             builder: (context) {
               final newIngredientController = TextEditingController();
+              final defaultUnitController = TextEditingController();
               return AlertDialog(
                 title: const Text('Add New Ingredient'),
-                content: TextField(
-                  controller: newIngredientController,
-                  decoration: const InputDecoration(labelText: 'Ingredient Name'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: newIngredientController,
+                      decoration: const InputDecoration(labelText: 'Ingredient Name'),
+                    ),
+                    TextField(
+                      controller: defaultUnitController,
+                      decoration: const InputDecoration(labelText: 'Default Unit (e.g., grams)'),
+                    ),
+                  ],
                 ),
                 actions: [
                   TextButton(
@@ -132,12 +144,16 @@ class _IngredientSelectionPageState extends ConsumerState<IngredientSelectionPag
                   TextButton(
                     onPressed: () {
                       final name = newIngredientController.text.trim();
-                      if (name.isNotEmpty) {
-                        ref.read(ingredientListProvider.notifier).addIngredient(name);
+                      final defaultUnit = defaultUnitController.text.trim();
+                      if (name.isNotEmpty && defaultUnit.isNotEmpty) {
+                        ref.read(ingredientListProvider.notifier).addIngredient(
+                              name,
+                              defaultUnit: defaultUnit,
+                            );
                         Navigator.pop(context);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please enter a valid ingredient name')),
+                          const SnackBar(content: Text('Please enter a valid ingredient name and default unit')),
                         );
                       }
                     },

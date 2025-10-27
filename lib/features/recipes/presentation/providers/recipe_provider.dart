@@ -3,6 +3,8 @@ import 'package:cookbook_app/core/providers.dart';
 import 'package:cookbook_app/features/recipes/data/models/recipe.dart';
 import 'package:cookbook_app/features/recipes/data/repositories/recipe_repository.dart';
 import 'package:cookbook_app/features/recipes/domain/usecases/add_recipe_with_ingredients.dart';
+// NEW: Import for update use case
+import 'package:cookbook_app/features/recipes/domain/usecases/update_recipe_with_ingredients.dart';
 
 final recipeListProvider = StateNotifierProvider<RecipeListNotifier, List<Recipe>>((ref) {
   final repository = ref.watch(recipeRepositoryProvider);
@@ -33,6 +35,30 @@ class RecipeListNotifier extends StateNotifier<List<Recipe>> {
       name: name,
       servings: servings,
       servingName: servingName,
+      ingredients: ingredients,
+      steps: steps,
+    );
+    await fetchRecipes(); // Refresh the list
+    ref.invalidate(searchRecipesProvider); // Invalidate search to refresh
+  }
+
+  // NEW: Update recipe method
+  Future<void> updateRecipe({
+    required int id,
+    required String name,
+    required double servings,
+    String? servingName,
+    required DateTime createdAt,
+    required List<Map<String, dynamic>> ingredients,
+    required List<String> steps,
+    required UpdateRecipeWithIngredients updateRecipeUseCase,
+  }) async {
+    await updateRecipeUseCase(
+      id: id,
+      name: name,
+      servings: servings,
+      servingName: servingName,
+      createdAt: createdAt,
       ingredients: ingredients,
       steps: steps,
     );

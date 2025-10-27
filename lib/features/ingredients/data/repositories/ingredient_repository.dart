@@ -5,6 +5,7 @@ abstract class IngredientRepository {
   Future<int> addGlobalIngredient(GlobalIngredient ingredient);
   Future<List<GlobalIngredient>> getAllGlobalIngredients();
   Future<GlobalIngredient?> getGlobalIngredientByName(String name);
+  Future<GlobalIngredient?> getGlobalIngredientById(int id);
 }
 
 class IngredientRepositoryImpl implements IngredientRepository {
@@ -25,5 +26,10 @@ class IngredientRepositoryImpl implements IngredientRepository {
   @override
   Future<GlobalIngredient?> getGlobalIngredientByName(String name) async {
     return await _databaseService.getGlobalIngredientByName(name);
+  }
+
+  @override
+  Future<GlobalIngredient?> getGlobalIngredientById(int id) async {
+    return await _databaseService.getGlobalIngredientById(id);
   }
 }

@@ -4,6 +4,8 @@ import 'package:cookbook_app/features/recipes/presentation/providers/recipe_prov
 import 'package:cookbook_app/features/recipes/presentation/pages/add_recipe_page.dart';
 import 'package:cookbook_app/features/recipes/presentation/pages/recipe_detail_page.dart';
 import 'package:cookbook_app/features/recipes/presentation/pages/search_page.dart';
+// NEW: Import for edit page
+import 'package:cookbook_app/features/recipes/presentation/pages/edit_recipe_page.dart';
 
 class RecipeListPage extends ConsumerWidget {
   const RecipeListPage({super.key});
@@ -59,6 +61,7 @@ class RecipeListPage extends ConsumerWidget {
                   ),
                   confirmDismiss: (direction) async {
                     if (direction == DismissDirection.endToStart) {
+                      // Delete confirmation
                       return await showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
@@ -77,10 +80,14 @@ class RecipeListPage extends ConsumerWidget {
                         ),
                       );
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Edit functionality for ${recipe.name} coming soon!')),
-                      );
-                      return false;
+                      // NEW: Navigate to edit page on swipe left (edit)
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditRecipePage(recipe: recipe),
+                        ),
+                      ).then((_) => ref.read(recipeListProvider.notifier).fetchRecipes());
+                      return false; // Do not dismiss the item
                     }
                   },
                   onDismissed: (direction) {

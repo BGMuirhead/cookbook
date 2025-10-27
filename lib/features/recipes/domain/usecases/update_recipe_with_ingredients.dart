@@ -5,16 +5,18 @@ import 'package:cookbook_app/features/recipes/data/models/recipe.dart';
 import 'package:cookbook_app/features/recipes/data/models/recipe_step.dart';
 import 'package:cookbook_app/features/recipes/data/repositories/recipe_repository.dart';
 
-class AddRecipeWithIngredients {
+class UpdateRecipeWithIngredients {
   final RecipeRepository recipeRepository;
   final IngredientRepository ingredientRepository;
 
-  AddRecipeWithIngredients(this.recipeRepository, this.ingredientRepository);
+  UpdateRecipeWithIngredients(this.recipeRepository, this.ingredientRepository);
 
-  Future<int> call({
+  Future<void> call({
+    required int id,
     required String name,
     required double servings,
     String? servingName,
+    required DateTime createdAt,
     required List<Map<String, dynamic>> ingredients,
     required List<String> steps,
   }) async {
@@ -31,11 +33,11 @@ class AddRecipeWithIngredients {
           name: name,
           defaultUnit: ingredientData['unit'] as String, // FIX: Added defaultUnit
         );
-        final id = await ingredientRepository.addGlobalIngredient(globalIngredient);
-        globalIngredient = globalIngredient.copyWith(id: id);
+        final newId = await ingredientRepository.addGlobalIngredient(globalIngredient);
+        globalIngredient = globalIngredient.copyWith(id: newId);
       }
       recipeIngredients.add(RecipeIngredient(
-        recipeId: 0, // Will be set after recipe insertion
+        recipeId: id, // Use existing recipe ID
         ingredientId: globalIngredient.id!,
         amount: ingredientData['amount'] as double,
         unit: ingredientData['unit'] as String,
@@ -45,23 +47,24 @@ class AddRecipeWithIngredients {
     // Create steps
     for (var i = 0; i < steps.length; i++) {
       recipeSteps.add(RecipeStep(
-        recipeId: 0, // Will be set after recipe insertion
+        recipeId: id, // Use existing recipe ID
         stepOrder: i + 1,
         description: steps[i],
       ));
     }
 
-    // Create recipe
+    // Create updated recipe object
     final recipe = Recipe(
+      id: id,
       name: name,
       servings: servings,
       servingName: servingName,
-      createdAt: now,
+      createdAt: createdAt,
       updatedAt: now,
       recipeIngredients: recipeIngredients,
       steps: recipeSteps,
     );
 
-    return await recipeRepository.addRecipe(recipe);
+    await recipeRepository.updateRecipe(recipe);
   }
 }

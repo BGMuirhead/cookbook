@@ -19,8 +19,9 @@ class IngredientListNotifier extends StateNotifier<List<GlobalIngredient>> {
     state = await repository.getAllGlobalIngredients();
   }
 
-  Future<void> addIngredient(String name) async {
-    await repository.addGlobalIngredient(GlobalIngredient(name: name));
-    await fetchIngredients(); // Refresh the list
+  Future<void> addIngredient(String name, {required String defaultUnit}) async { // NEW: Added defaultUnit
+    final ingredient = GlobalIngredient(name: name, defaultUnit: defaultUnit); // NEW: Include defaultUnit
+    await repository.addGlobalIngredient(ingredient);
+    await fetchIngredients();
   }
 }

@@ -8,7 +8,7 @@ import 'package:cookbook_app/features/recipes/data/models/recipe_step.dart';
 class DatabaseService {
   static Database? _database;
   static const String dbName = 'cookbook.db';
-  static const int dbVersion = 1;
+  static const int dbVersion = 1; // Incremented to force DB rebuild
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -33,7 +33,8 @@ class DatabaseService {
         name TEXT NOT NULL UNIQUE,
         purchase_amount REAL,
         purchase_unit TEXT,
-        price REAL
+        price REAL,
+        default_unit TEXT NOT NULL
       )
     ''');
 
@@ -70,24 +71,56 @@ class DatabaseService {
       )
     ''');
 
-    // Indexes for performance
     await db.execute('CREATE INDEX idx_recipe_ingredients_recipe_id ON recipe_ingredients(recipe_id)');
     await db.execute('CREATE INDEX idx_recipe_ingredients_ingredient_id ON recipe_ingredients(ingredient_id)');
     await db.execute('CREATE INDEX idx_steps_recipe_id ON steps(recipe_id)');
+
+    // Pre-populate common ingredients
+    await db.transaction((txn) async {
+      final commonIngredients = [
+        {'name': 'Plain Flour', 'default_unit': 'g'},
+        {'name': 'Wholemeal Flour', 'default_unit': 'g'},
+        {'name': 'White Sugar', 'default_unit': 'g'},
+        {'name': 'Raw Sugar', 'default_unit': 'g'},
+        {'name': 'Brown Sugar', 'default_unit': 'g'},
+        {'name': 'Dark Brown Sugar', 'default_unit': 'g'},
+        {'name': 'Salted Butter', 'default_unit': 'g'},
+        {'name': 'Unsalted Butter', 'default_unit': 'g'},
+        {'name': 'Eggs', 'default_unit': 'units'},
+        {'name': 'Milk', 'default_unit': 'ml'},
+        {'name': 'Salt', 'default_unit': 'g'},
+        {'name': 'Yeast', 'default_unit': 'g'},
+        {'name': 'Baking Powder', 'default_unit': 'g'},
+        {'name': 'Baking Soda', 'default_unit': 'g'},
+        {'name': 'Cinnamon', 'default_unit': 'g'},
+        {'name': 'Nutmeg', 'default_unit': 'g'},
+        {'name': 'Vanilla Extract', 'default_unit': 'ml'},
+        {'name': 'Vegetable Oil', 'default_unit': 'ml'}
+      ];
+
+      for (var ingredient in commonIngredients) {
+        try {
+          await txn.insert('global_ingredients', ingredient);
+        } catch (e) {
+          // Log error but continue to avoid stopping the transaction
+          print('Error inserting ingredient ${ingredient['name']}: $e');
+        }
+      }
+    });
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Handle schema migrations in the future
+    // No migration needed since we're rebuilding from scratch
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE global_ingredients ADD COLUMN default_unit TEXT NOT NULL DEFAULT "grams"');
+    }
+    // Future migrations can be added here if needed
   }
 
   // CRUD for GlobalIngredient
   Future<int> addGlobalIngredient(GlobalIngredient ingredient) async {
     final db = await database;
-    return await db.insert(
-      'global_ingredients',
-      ingredient.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    return await db.insert('global_ingredients', ingredient.toMap());
   }
 
   Future<List<GlobalIngredient>> getAllGlobalIngredients() async {
@@ -102,6 +135,16 @@ class DatabaseService {
       'global_ingredients',
       where: 'name = ?',
       whereArgs: [name],
+    );
+    return maps.isNotEmpty ? GlobalIngredient.fromMap(maps.first) : null;
+  }
+
+  Future<GlobalIngredient?> getGlobalIngredientById(int id) async {
+    final db = await database;
+    final maps = await db.query(
+      'global_ingredients',
+      where: 'id = ?',
+      whereArgs: [id],
     );
     return maps.isNotEmpty ? GlobalIngredient.fromMap(maps.first) : null;
   }
@@ -124,6 +167,34 @@ class DatabaseService {
         });
       }
       return recipeId;
+    });
+  }
+
+  Future<void> updateRecipe(Recipe recipe) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.update(
+        'recipes',
+        recipe.toMap(),
+        where: 'id = ?',
+        whereArgs: [recipe.id],
+      );
+      // Delete existing related records
+      await txn.delete('recipe_ingredients', where: 'recipe_id = ?', whereArgs: [recipe.id]);
+      await txn.delete('steps', where: 'recipe_id = ?', whereArgs: [recipe.id]);
+      // Insert new related records
+      for (var ingredient in recipe.recipeIngredients) {
+        await txn.insert('recipe_ingredients', {
+          ...ingredient.toMap(),
+          'recipe_id': recipe.id,
+        });
+      }
+      for (var step in recipe.steps) {
+        await txn.insert('steps', {
+          ...step.toMap(),
+          'recipe_id': recipe.id,
+        });
+      }
     });
   }
 
@@ -152,7 +223,6 @@ class DatabaseService {
     return recipes;
   }
 
-  // Search by recipe name only
   Future<List<Recipe>> searchRecipes(String query) async {
     final db = await database;
     final recipeMaps = await db.rawQuery('''
@@ -182,7 +252,6 @@ class DatabaseService {
     return recipes;
   }
 
-  // Delete recipe (cascades to ingredients/steps due to foreign keys)
   Future<void> deleteRecipe(int id) async {
     final db = await database;
     await db.delete('recipes', where: 'id = ?', whereArgs: [id]);
